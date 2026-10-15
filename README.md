@@ -216,7 +216,7 @@ python -m pip install -r requirements.txt
 python -m pip install -e . --no-deps
 
 ruff check . && ruff format --check .      # expected: All checks passed!
-pytest -q                                  # expected: 43 passed (the dataset test also runs once data is downloaded)
+pytest -q                                  # expected: 42 passed, 1 skipped (43 passed once the data is downloaded)
 
 python -m pxray download                   # fetches the 75 MB file, verifies MD5
 python -m pxray check-data                 # prints split sizes, label counts, duplicate counts
