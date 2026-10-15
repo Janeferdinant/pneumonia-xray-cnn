@@ -70,9 +70,7 @@ def train_one(cfg: TrainConfig, splits: dict[str, Split], seed: int) -> RunResul
     model = build_model(cfg.model, pretrained=cfg.pretrained)
     loss_fn = make_loss(cfg.loss, pos_weight(splits["train"].labels), cfg.focal_gamma)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
-    sched = torch.optim.lr_scheduler.LambdaLR(
-        opt, lambda e: 0.5 * (1 + math.cos(math.pi * e / cfg.epochs))
-    )
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: 0.5 * (1 + math.cos(math.pi * e / cfg.epochs)))
     rng = np.random.default_rng(seed)
     gen = torch.Generator().manual_seed(seed)
     aug = AugmentConfig()

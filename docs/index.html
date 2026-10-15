@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pneumonia X-ray CNN Explorer</title>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --text: #1c1e21; --muted: #5a6068; --line: #d9dbd6;
+  --accent: #0072B2; --accent2: #D55E00; --ok: #0b6b3a; --bad: #a4241b;
+  --warn-bg: #fdecea; --warn-text: #5c1410; --warn-line: #a4241b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161a; --panel: #1d2026; --text: #e8e9ea; --muted: #a3a9b1; --line: #343a43;
+    --accent: #56b4e9; --accent2: #f0a35e; --ok: #5fd08f; --bad: #ff8d84;
+    --warn-bg: #3a1613; --warn-text: #ffd9d5; --warn-line: #ff8d84;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.warn { position: sticky; top: 0; z-index: 5; background: var(--warn-bg); color: var(--warn-text);
+  border-bottom: 3px solid var(--warn-line); padding: 10px 16px; font-weight: 600; }
+.warn strong { text-transform: uppercase; letter-spacing: .03em; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.6rem; margin: 8px 0 4px; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+p.lead { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+.grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .grid { grid-template-columns: 360px 1fr; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+fieldset { border: 0; padding: 0; margin: 0 0 12px; }
+legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+label { display: block; padding: 3px 0; }
+input[type=range] { width: 100%; }
+.thr { font-variant-numeric: tabular-nums; font-size: 1.4rem; font-weight: 700; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+.metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.metric { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.metric b { display: block; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.metric span { color: var(--muted); font-size: .85rem; }
+svg { width: 100%; height: auto; max-width: 440px; display: block; }
+svg text { fill: var(--muted); font-size: 11px; }
+.gallery { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); margin-top: 8px; }
+.card { border: 2px solid var(--line); border-radius: 8px; padding: 6px; background: var(--panel); font-size: .8rem; }
+.card.wrong { border-color: var(--bad); border-style: dashed; }
+.card img { width: 100%; height: auto; display: block; border-radius: 4px; image-rendering: auto; background: #000; }
+.tag-ok { color: var(--ok); font-weight: 700; }
+.tag-bad { color: var(--bad); font-weight: 700; }
+.note { color: var(--muted); font-size: .88rem; }
+footer { color: var(--muted); font-size: .85rem; padding: 16px 0 32px; }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="warn" role="alert">
+  <strong>Not a medical device. Not for diagnosis.</strong>
+  Research exercise on a public paediatric dataset. Never use these outputs for any clinical decision.
+</div>
+<main>
+  <h1>Pneumonia X-ray CNN explorer</h1>
+  <p class="lead">Precomputed predictions of two models on the 624 official test images of PneumoniaMNIST
+    (seed 0 of each model). Move the threshold to see the sensitivity and specificity trade-off.
+    Everything runs in your browser from a static JSON file.</p>
+
+  <div class="grid">
+    <section class="panel" aria-label="Controls">
+      <fieldset>
+        <legend>Model</legend>
+        <div id="models"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Probabilities</legend>
+        <label><input type="checkbox" id="cal"> Temperature-scaled (T fitted on validation only)</label>
+      </fieldset>
+      <fieldset>
+        <legend><label for="thr" style="padding:0">Decision threshold on P(pneumonia)</label></legend>
+        <div class="thr" id="thrval" aria-live="polite">0.50</div>
+        <input type="range" id="thr" min="0.01" max="0.99" step="0.01" value="0.5">
+      </fieldset>
+      <fieldset>
+        <legend>Gallery</legend>
+        <label><input type="checkbox" id="cam"> Show Grad-CAM overlay (evidence for pneumonia)</label>
+        <label for="filter" style="margin-top:6px">Show</label>
+        <select id="filter">
+          <option value="all">all gallery images</option>
+          <option value="wrong">errors at this threshold</option>
+          <option value="fn">missed pneumonia (false negatives)</option>
+          <option value="fp">false alarms (false positives)</option>
+        </select>
+      </fieldset>
+      <p class="note" id="disclaimer"></p>
+    </section>
+
+    <section class="panel" aria-label="Test-set results">
+      <h2>All 624 test images at this threshold</h2>
+      <div class="metrics" id="metrics"></div>
+      <table aria-label="Confusion matrix">
+        <thead><tr><th></th><th>Predicted normal</th><th>Predicted pneumonia</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">True normal</th><td id="tn"></td><td id="fp"></td></tr>
+          <tr><th scope="row">True pneumonia</th><td id="fn"></td><td id="tp"></td></tr>
+        </tbody>
+      </table>
+      <h2 style="margin-top:16px">ROC curve</h2>
+      <svg id="roc" viewBox="0 0 440 360" role="img" aria-label="ROC curve with the current operating point"></svg>
+      <p class="note">The dot is the current threshold. Picking a threshold by looking at the test set is
+        optimistic; in the study the threshold is chosen on validation data and the shift between
+        validation and test is reported in the README.</p>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-top:16px" aria-label="Gallery">
+    <h2>Test images</h2>
+    <p class="note" id="gallerynote"></p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+  <footer>
+    Data: PneumoniaMNIST from MedMNIST v2 (CC BY 4.0), derived from Kermany et al., 2018 (CC BY 4.0).
+    Code: CC BY-NC-ND 4.0, see the repository README.
+  </footer>
+</main>
+<script>
+(function () {
+  "use strict";
+  var state = { data: null, model: null, cal: false, thr: 0.5, cam: false, filter: "all" };
+  var $ = function (id) { return document.getElementById(id); };
+  function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+  function probs() {
+    var m = state.data.models[state.model], t = state.cal ? m.temperature : 1;
+    return m.logits.map(function (z) { return sigmoid(z / t); });
+  }
+  function pct(x) { return (100 * x).toFixed(1) + "%"; }
+  function stats(p) {
+    var y = state.data.labels, tn = 0, fp = 0, fn = 0, tp = 0;
+    for (var i = 0; i < y.length; i++) {
+      var pred = p[i] >= state.thr ? 1 : 0;
+      if (y[i] === 1) { pred ? tp++ : fn++; } else { pred ? fp++ : tn++; }
+    }
+    return { tn: tn, fp: fp, fn: fn, tp: tp };
+  }
+  function ratio(a, b) { return b ? a / b : NaN; }
+  function fmt(x) { return isNaN(x) ? "n/a" : pct(x); }
+  function renderMetrics(s) {
+    var items = [["Sensitivity (recall)", ratio(s.tp, s.tp + s.fn)], ["Specificity", ratio(s.tn, s.tn + s.fp)],
+      ["Precision (PPV)", ratio(s.tp, s.tp + s.fp)], ["Negative predictive value", ratio(s.tn, s.tn + s.fn)]];
+    $("metrics").innerHTML = items.map(function (it) {
+      return '<div class="metric"><b>' + fmt(it[1]) + "</b><span>" + it[0] + "</span></div>";
+    }).join("");
+    ["tn", "fp", "fn", "tp"].forEach(function (k) { $(k).textContent = s[k]; });
+  }
+  function roc(p) {
+    var y = state.data.labels, idx = p.map(function (_, i) { return i; });
+    idx.sort(function (a, b) { return p[b] - p[a]; });
+    var P = y.reduce(function (a, b) { return a + b; }, 0), N = y.length - P, tp = 0, fp = 0, pts = [[0, 0]];
+    for (var k = 0; k < idx.length; k++) {
+      if (y[idx[k]] === 1) tp++; else fp++;
+      if (k === idx.length - 1 || p[idx[k + 1]] !== p[idx[k]]) pts.push([fp / N, tp / P]);
+    }
+    return pts;
+  }
+  function renderRoc(p, s) {
+    var W = 440, H = 360, l = 44, r = 12, t = 10, b = 40, pw = W - l - r, ph = H - t - b;
+    var X = function (v) { return l + v * pw; }, Y = function (v) { return t + (1 - v) * ph; };
+    var pts = roc(p), d = pts.map(function (q, i) { return (i ? "L" : "M") + X(q[0]).toFixed(1) + " " + Y(q[1]).toFixed(1); }).join("");
+    var g = "";
+    for (var i = 0; i <= 5; i++) {
+      var v = i / 5;
+      g += '<line x1="' + X(v) + '" x2="' + X(v) + '" y1="' + Y(0) + '" y2="' + Y(1) + '" stroke="var(--line)"/>';
+      g += '<line y1="' + Y(v) + '" y2="' + Y(v) + '" x1="' + X(0) + '" x2="' + X(1) + '" stroke="var(--line)"/>';
+      g += '<text x="' + X(v) + '" y="' + (Y(0) + 14) + '" text-anchor="middle">' + v.toFixed(1) + "</text>";
+      g += '<text x="' + (X(0) - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + v.toFixed(1) + "</text>";
+    }
+    var fpr = ratio(s.fp, s.fp + s.tn), tpr = ratio(s.tp, s.tp + s.fn);
+    var dot = (isNaN(fpr) || isNaN(tpr)) ? "" :
+      '<circle cx="' + X(fpr) + '" cy="' + Y(tpr) + '" r="6" fill="var(--accent2)" stroke="var(--panel)" stroke-width="2"/>';
+    $("roc").innerHTML = g +
+      '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(1) + '" y2="' + Y(1) + '" stroke="var(--muted)" stroke-dasharray="4 4"/>' +
+      '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.5"/>' + dot +
+      '<text x="' + (l + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">False positive rate (1 - specificity)</text>' +
+      '<text transform="translate(12 ' + (t + ph / 2) + ') rotate(-90)" text-anchor="middle">True positive rate (sensitivity)</text>';
+  }
+  function renderGallery(p) {
+    var y = state.data.labels, out = [];
+    state.data.gallery.forEach(function (i) {
+      var pred = p[i] >= state.thr ? 1 : 0, wrong = pred !== y[i];
+      var kind = wrong ? (y[i] === 1 ? "fn" : "fp") : "ok";
+      if (state.filter === "wrong" && !wrong) return;
+      if (state.filter === "fn" && kind !== "fn") return;
+      if (state.filter === "fp" && kind !== "fp") return;
+      var src = state.cam ? "data/cam/" + state.model + "/" + i + ".png" : "data/img/" + i + ".png";
+      var names = ["normal", "pneumonia"];
+      out.push('<div class="card' + (wrong ? " wrong" : "") + '"><img src="' + src + '" width="96" height="96" ' +
+        'alt="Test image ' + i + ', true label ' + names[y[i]] + (state.cam ? ", Grad-CAM overlay" : "") + '">' +
+        "<div>#" + i + " true: <b>" + names[y[i]] + "</b></div>" +
+        "<div>P(pneumonia) " + p[i].toFixed(2) + " &rarr; " + names[pred] + "</div>" +
+        '<div class="' + (wrong ? "tag-bad" : "tag-ok") + '">' + (wrong ? "&#10007; wrong" : "&#10003; correct") + "</div></div>");
+    });
+    $("gallery").innerHTML = out.length ? out.join("") : '<p class="note">No images match this filter at this threshold.</p>';
+  }
+  function render() {
+    var p = probs(), s = stats(p);
+    $("thrval").textContent = state.thr.toFixed(2);
+    renderMetrics(s); renderRoc(p, s); renderGallery(p);
+  }
+  function init(data) {
+    state.data = data;
+    var names = Object.keys(data.models);
+    state.model = names[0];
+    $("models").innerHTML = names.map(function (n, i) {
+      return '<label><input type="radio" name="model" value="' + n + '"' + (i ? "" : " checked") + "> " + data.models[n].label + "</label>";
+    }).join("");
+    $("disclaimer").textContent = data.disclaimer + " " + data.dataset + ".";
+    $("gallerynote").textContent = data.gallery_note + " " + data.cam_note;
+    document.querySelectorAll("input[name=model]").forEach(function (el) {
+      el.addEventListener("change", function () { state.model = el.value; render(); });
+    });
+    $("cal").addEventListener("change", function (e) { state.cal = e.target.checked; render(); });
+    $("thr").addEventListener("input", function (e) { state.thr = parseFloat(e.target.value); render(); });
+    $("cam").addEventListener("change", function (e) { state.cam = e.target.checked; render(); });
+    $("filter").addEventListener("change", function (e) { state.filter = e.target.value; render(); });
+    render();
+  }
+  fetch("data/explorer.json").then(function (r) { return r.json(); }).then(init).catch(function (e) {
+    document.querySelector("main").insertAdjacentHTML("afterbegin",
+      '<p class="tag-bad">Could not load data/explorer.json (' + e + "). Serve this folder over http, for example " +
+      "<code>python -m http.server -d docs</code>.</p>");
+  });
+})();
+</script>
+</body>
+</html>

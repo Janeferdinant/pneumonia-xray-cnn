@@ -36,3 +36,6 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["data: needs the downloaded PneumoniaMNIST file (skipped when absent)"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pxray/report.py" = ["E501"]  # long Markdown table strings

@@ -10,8 +10,14 @@ from .conftest import make_toy_splits
 
 
 def _cfg(**kw):
-    base = {"model": "small_cnn", "pretrained": False, "epochs": 2, "batch_size": 16,
-            "lr": 1e-3, "augment": True}
+    base = {
+        "model": "small_cnn",
+        "pretrained": False,
+        "epochs": 2,
+        "batch_size": 16,
+        "lr": 1e-3,
+        "augment": True,
+    }
     base.update(kw)
     return TrainConfig(**base)
 
@@ -57,8 +63,7 @@ def test_augmentation_shape_seeded_and_never_flips():
 
 
 def test_augmentation_identity_when_ranges_zero():
-    cfg = AugmentConfig(max_rotation_deg=0, scale=(1.0, 1.0), max_translate=0,
-                        brightness=0, contrast=0)
+    cfg = AugmentConfig(max_rotation_deg=0, scale=(1.0, 1.0), max_translate=0, brightness=0, contrast=0)
     x = torch.randn(4, 1, 16, 16)
     out = augment_batch(x, torch.Generator().manual_seed(0), cfg)
     assert torch.allclose(out, x, atol=1e-5)
@@ -74,7 +79,5 @@ def test_losses():
     easy = focal_loss_with_logits(torch.tensor([8.0, -8.0]), torch.tensor([1.0, 0.0]), gamma=2.0)
     hard = focal_loss_with_logits(torch.tensor([-1.0, 1.0]), torch.tensor([1.0, 0.0]), gamma=2.0)
     assert easy < 1e-5 < hard
-    assert torch.isclose(
-        focal_loss_with_logits(logits, y, gamma=0.0, alpha=0.5), 0.5 * ref, atol=1e-6
-    )
+    assert torch.isclose(focal_loss_with_logits(logits, y, gamma=0.0, alpha=0.5), 0.5 * ref, atol=1e-6)
     assert callable(make_loss("bce", 2.0)) and callable(make_loss("focal", 2.0))

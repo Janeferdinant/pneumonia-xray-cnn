@@ -48,15 +48,17 @@ def paired_bootstrap(
     out: dict[str, dict[str, tuple[float, float, float]]] = {}
     for m in scores:
         out[m] = {
-            k: (point[m][k], float(np.percentile(reps[m][k], lo_q)),
-                float(np.percentile(reps[m][k], hi_q)))
+            k: (point[m][k], float(np.percentile(reps[m][k], lo_q)), float(np.percentile(reps[m][k], hi_q)))
             for k in metrics
         }
     for a, b in differences or []:
         d = {}
         for k in metrics:
             diff = np.array(reps[a][k]) - np.array(reps[b][k])
-            d[k] = (point[a][k] - point[b][k], float(np.percentile(diff, lo_q)),
-                    float(np.percentile(diff, hi_q)))
+            d[k] = (
+                point[a][k] - point[b][k],
+                float(np.percentile(diff, lo_q)),
+                float(np.percentile(diff, hi_q)),
+            )
         out[f"{a} - {b}"] = d
     return out

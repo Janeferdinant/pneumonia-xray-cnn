@@ -16,10 +16,8 @@ import torch
 
 ZENODO = "https://zenodo.org/records/10519652/files"
 DATASETS: dict[int, dict[str, str]] = {
-    64: {"url": f"{ZENODO}/pneumoniamnist_64.npz?download=1",
-         "md5": "8f4eceb4ccffa70c672198ea285246c6"},
-    128: {"url": f"{ZENODO}/pneumoniamnist_128.npz?download=1",
-          "md5": "05b46931834c231683c68f40c47b2971"},
+    64: {"url": f"{ZENODO}/pneumoniamnist_64.npz?download=1", "md5": "8f4eceb4ccffa70c672198ea285246c6"},
+    128: {"url": f"{ZENODO}/pneumoniamnist_128.npz?download=1", "md5": "05b46931834c231683c68f40c47b2971"},
 }
 SPLITS = ("train", "val", "test")
 LABEL_NAMES = {0: "normal", 1: "pneumonia"}

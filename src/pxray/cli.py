@@ -20,8 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("download", help="download PneumoniaMNIST 128 px and verify its MD5")
     sub.add_parser("check-data", help="verify split integrity, print and save a data report")
     t = sub.add_parser("train", help="train configurations over several seeds")
-    t.add_argument("--run", nargs="+", default=None,
-                   help="run names (default: logreg small_cnn mobilenet_v3_small)")
+    t.add_argument(
+        "--run", nargs="+", default=None, help="run names (default: logreg small_cnn mobilenet_v3_small)"
+    )
     t.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2, 3, 4])
     t.add_argument("--force", action="store_true")
     e = sub.add_parser("evaluate", help="metrics, calibration, bootstrap CIs, figures")
@@ -33,8 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    root, results, art, docs = (Path(args.root), Path(args.results), Path(args.artifacts),
-                                Path(args.docs))
+    root, results, art, docs = (Path(args.root), Path(args.results), Path(args.artifacts), Path(args.docs))
     if args.command == "download":
         from .data import ensure_dataset
 

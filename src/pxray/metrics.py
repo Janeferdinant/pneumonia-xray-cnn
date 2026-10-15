@@ -46,7 +46,10 @@ def binary_metrics(y: np.ndarray, prob: np.ndarray, threshold: float = 0.5) -> d
         "specificity": spec,
         "precision": prec,
         "f1": f1,
-        "tn": tn, "fp": fp, "fn": fn, "tp": tp,
+        "tn": tn,
+        "fp": fp,
+        "fn": fn,
+        "tp": tp,
     }
 
 

@@ -8,8 +8,12 @@ from torch import nn
 
 def _block(cin: int, cout: int, pool: bool) -> nn.Sequential:
     layers: list[nn.Module] = [
-        nn.Conv2d(cin, cout, 3, padding=1, bias=False), nn.BatchNorm2d(cout), nn.ReLU(inplace=True),
-        nn.Conv2d(cout, cout, 3, padding=1, bias=False), nn.BatchNorm2d(cout), nn.ReLU(inplace=True),
+        nn.Conv2d(cin, cout, 3, padding=1, bias=False),
+        nn.BatchNorm2d(cout),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(cout, cout, 3, padding=1, bias=False),
+        nn.BatchNorm2d(cout),
+        nn.ReLU(inplace=True),
     ]
     if pool:
         layers.append(nn.MaxPool2d(2))
@@ -94,5 +98,12 @@ def count_parameters(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters())
 
 
-__all__ = ["MODEL_NAMES", "MobileNetGray", "SmallCNN", "build_model", "count_parameters",
-           "gradcam_layer", "torch"]
+__all__ = [
+    "MODEL_NAMES",
+    "MobileNetGray",
+    "SmallCNN",
+    "build_model",
+    "count_parameters",
+    "gradcam_layer",
+    "torch",
+]

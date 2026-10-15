@@ -34,9 +34,7 @@ def augment_batch(x: torch.Tensor, g: torch.Generator, cfg: AugmentConfig) -> to
     tx = _uniform(n, -cfg.max_translate, cfg.max_translate, g)
     ty = _uniform(n, -cfg.max_translate, cfg.max_translate, g)
     cos, sin = torch.cos(ang) / s, torch.sin(ang) / s
-    theta = torch.stack(
-        [torch.stack([cos, -sin, tx], dim=1), torch.stack([sin, cos, ty], dim=1)], dim=1
-    )
+    theta = torch.stack([torch.stack([cos, -sin, tx], dim=1), torch.stack([sin, cos, ty], dim=1)], dim=1)
     grid = F.affine_grid(theta, list(x.shape), align_corners=False)
     out = F.grid_sample(x, grid, mode="bilinear", padding_mode="border", align_corners=False)
     c = _uniform(n, 1 - cfg.contrast, 1 + cfg.contrast, g).view(n, 1, 1, 1)
