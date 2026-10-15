@@ -10,8 +10,10 @@ from pxray.data import (
     Standardizer,
     check_splits,
     class_counts,
+    deduplicate_splits,
     load_splits,
     pos_weight,
+    prepare_splits,
 )
 
 from .conftest import make_toy_splits
@@ -81,14 +83,28 @@ def test_standardizer_uses_train_statistics_only(toy_splits):
     assert Standardizer.fit(other["test"].images).mean != st.mean
 
 
+def test_deduplicate_removes_from_later_splits_only(toy_splits):
+    toy_splits["val"].images[0] = toy_splits["train"].images[0].copy()
+    toy_splits["test"].images[1] = toy_splits["val"].images[2].copy()
+    toy_splits["test"].images[2] = toy_splits["train"].images[3].copy()
+    clean, removed = deduplicate_splits(toy_splits)
+    assert removed == {"train": 0, "val": 1, "test": 2}
+    assert len(clean["train"].labels) == 60
+    assert len(clean["val"].labels) == 19 and len(clean["test"].labels) == 28
+    assert check_splits(clean)["cross_split_duplicates"] == 0
+
+
 @pytest.mark.data
 def test_real_pneumoniamnist_official_split_integrity():
     root = Path("data")
     if not (root / "pneumoniamnist_128.npz").exists():
         pytest.skip("dataset not downloaded; run `pxray download`")
-    splits = load_splits(root, 128)
-    rep = check_splits(splits)
-    assert rep["sizes"] == {"train": 4708, "val": 524, "test": 624}
+    raw = load_splits(root, 128)
+    assert {k: len(v.labels) for k, v in raw.items()} == {"train": 4708, "val": 524, "test": 624}
+    splits, rep = prepare_splits(root, 128)
+    # the official test set is untouched; 8 validation images duplicate training images
+    assert rep["removed_cross_split_duplicates"] == {"train": 0, "val": 8, "test": 0}
+    assert rep["sizes"] == {"train": 4708, "val": 516, "test": 624}
     assert rep["label_counts"]["test"] == {0: 234, 1: 390}
     assert rep["label_counts"]["train"] == {0: 1214, 1: 3494}
     assert rep["cross_split_duplicates"] == 0
