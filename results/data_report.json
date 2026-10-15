@@ -1,0 +1,46 @@
+{
+ "sizes": {
+  "train": 4708,
+  "val": 516,
+  "test": 624
+ },
+ "image_shape": [
+  128,
+  128
+ ],
+ "label_counts": {
+  "train": {
+   "0": 1214,
+   "1": 3494
+  },
+  "val": {
+   "0": 135,
+   "1": 381
+  },
+  "test": {
+   "0": 234,
+   "1": 390
+  }
+ },
+ "positive_rate": {
+  "train": 0.7421410365335599,
+  "val": 0.7383720930232558,
+  "test": 0.625
+ },
+ "cross_split_duplicates": 0,
+ "within_split_duplicates": {
+  "train": 18,
+  "val": 0,
+  "test": 3
+ },
+ "removed_cross_split_duplicates": {
+  "train": 0,
+  "val": 8,
+  "test": 0
+ },
+ "official_sizes": {
+  "train": 4708,
+  "val": 524,
+  "test": 624
+ }
+}
