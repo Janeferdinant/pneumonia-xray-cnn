@@ -113,7 +113,7 @@ def explain_all(root: Path, results: Path, art_dir: Path, docs: Path) -> dict:
                     i = sel[k][c]
                     p = 1 / (1 + np.exp(-lg0[i]))
                     ax.imshow(overlay_heatmap(imgs[i], cam0[i], 0.55))
-                    ax.set_title(f"#{i}  P(pneumonia)={p:.2f}", fontsize=8)
+                    ax.set_title(f"#{i}  p={p:.2f}", fontsize=8)
             axes[r, 0].text(
                 -0.08,
                 0.5,

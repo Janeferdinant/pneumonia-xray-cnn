@@ -1,0 +1,71 @@
+{
+ "run": "mobilenet_v3_small",
+ "seed": 0,
+ "config": {
+  "model": "mobilenet_v3_small",
+  "pretrained": true,
+  "epochs": 10,
+  "batch_size": 64,
+  "lr": 0.0005,
+  "weight_decay": 0.0001,
+  "loss": "bce",
+  "focal_gamma": 2.0,
+  "augment": true
+ },
+ "best_epoch": 8,
+ "best_val_auc": 0.9989306892194031,
+ "test_auc": 0.9892833662064431,
+ "seconds": 362.6,
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 0.08505193713796068,
+   "val_auc": 0.9918732380674637
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.04209913612171666,
+   "val_auc": 0.9920676582093905
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.031371471474458325,
+   "val_auc": 0.9951589384660251
+  },
+  {
+   "epoch": 4,
+   "train_loss": 0.024178154813640055,
+   "val_auc": 0.9943034898415476
+  },
+  {
+   "epoch": 5,
+   "train_loss": 0.02024188418868698,
+   "val_auc": 0.9964421114027413
+  },
+  {
+   "epoch": 6,
+   "train_loss": 0.016396618326342552,
+   "val_auc": 0.9979780305239623
+  },
+  {
+   "epoch": 7,
+   "train_loss": 0.016126161220443126,
+   "val_auc": 0.9987362690774765
+  },
+  {
+   "epoch": 8,
+   "train_loss": 0.011159904731566936,
+   "val_auc": 0.9989306892194031
+  },
+  {
+   "epoch": 9,
+   "train_loss": 0.009266045848944224,
+   "val_auc": 0.9989306892194031
+  },
+  {
+   "epoch": 10,
+   "train_loss": 0.008501299936146322,
+   "val_auc": 0.9989306892194031
+  }
+ ]
+}
