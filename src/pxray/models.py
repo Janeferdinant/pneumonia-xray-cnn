@@ -17,14 +17,21 @@ def _block(cin: int, cout: int, pool: bool) -> nn.Sequential:
 
 
 class SmallCNN(nn.Module):
-    """Four conv blocks (16-32-64-96 channels), global average pooling, one logit."""
+    """Stride-2 stem (16 ch) then three double-conv blocks (32-64-96 ch), global average pooling.
 
-    def __init__(self, in_ch: int = 1, widths: tuple[int, ...] = (16, 32, 64, 96)) -> None:
+    About 0.21 M parameters; the final feature map is 1/8 of the input (16x16 at 128 px).
+    """
+
+    def __init__(self, in_ch: int = 1, widths: tuple[int, ...] = (32, 64, 96)) -> None:
         super().__init__()
-        chans = (in_ch, *widths)
-        self.features = nn.Sequential(
-            *[_block(chans[i], chans[i + 1], pool=i < len(widths) - 1) for i in range(len(widths))]
+        stem = nn.Sequential(
+            nn.Conv2d(in_ch, 16, 3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(16),
+            nn.ReLU(inplace=True),
         )
+        chans = (16, *widths)
+        blocks = [_block(chans[i], chans[i + 1], pool=i < len(widths) - 1) for i in range(len(widths))]
+        self.features = nn.Sequential(stem, *blocks)
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.drop = nn.Dropout(0.3)
         self.fc = nn.Linear(widths[-1], 1)

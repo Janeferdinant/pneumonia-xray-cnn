@@ -23,14 +23,14 @@ IMAGE_SIZE = 128
 MASK_FRACS = (0.05, 0.10, 0.20)
 
 RUNS: dict[str, TrainConfig] = {
-    "small_cnn": TrainConfig(model="small_cnn", epochs=30, lr=2e-3, loss="bce"),
+    "small_cnn": TrainConfig(model="small_cnn", epochs=15, lr=2e-3, loss="bce"),
     "mobilenet_v3_small": TrainConfig(
         model="mobilenet_v3_small", pretrained=True, epochs=10, lr=5e-4, loss="bce"
     ),
     # ablations
-    "small_cnn_unweighted": TrainConfig(model="small_cnn", epochs=30, lr=2e-3, loss="bce_unweighted"),
-    "small_cnn_focal": TrainConfig(model="small_cnn", epochs=30, lr=2e-3, loss="focal"),
-    "small_cnn_noaug": TrainConfig(model="small_cnn", epochs=30, lr=2e-3, loss="bce", augment=False),
+    "small_cnn_unweighted": TrainConfig(model="small_cnn", epochs=15, lr=2e-3, loss="bce_unweighted"),
+    "small_cnn_focal": TrainConfig(model="small_cnn", epochs=15, lr=2e-3, loss="focal"),
+    "small_cnn_noaug": TrainConfig(model="small_cnn", epochs=15, lr=2e-3, loss="bce", augment=False),
     "mobilenet_v3_small_scratch": TrainConfig(
         model="mobilenet_v3_small", pretrained=False, epochs=10, lr=5e-4, loss="bce"
     ),
