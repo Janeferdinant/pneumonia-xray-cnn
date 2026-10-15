@@ -1,0 +1,11 @@
+data/
+artifacts/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+*.pth
+*.pt
+*.npz.tmp
