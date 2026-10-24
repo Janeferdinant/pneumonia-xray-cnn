@@ -13,24 +13,24 @@ CPU only, 5 seeds per CNN. All numbers below are from the committed runs in `res
 (2026-10-15) and are on the 624-image official test set. Brackets are bootstrap 95% intervals over test images
 (2000 resamples; mean over seeds).
 
-| Model | ROC AUC | Sensitivity at 90% specificity | Sensitivity / specificity at 0.5 | ECE (raw) |
-|---|---|---|---|---|
-| Logistic regression on pixels (baseline, 1 run) | 0.928 [0.903, 0.951] | 0.808 [0.635, 0.898] | 0.972 / 0.714 | 0.078 |
-| Small CNN from scratch (0.21 M parameters, 5 seeds) | 0.986 [0.978, 0.993] | 0.985 [0.958, 0.996] | 0.978 / 0.914 | 0.026 |
-| MobileNetV3-Small, ImageNet, fine-tuned (1.5 M parameters, 5 seeds) | 0.990 [0.984, 0.994] | 0.986 [0.957, 0.996] | 0.993 / 0.848 | 0.043 |
+| Model | ROC AUC | Sensitivity at 90% specificity | Sensitivity / specificity at 0.5 | ECE (raw) | Status |
+|---|---|---|---|---|---|
+| Logistic regression on pixels (baseline, 1 run) | 0.928 [0.903, 0.951] | 0.808 [0.635, 0.898] | 0.972 / 0.714 | 0.078 | Verified (run 2026-10-15, 1 run) |
+| Small CNN from scratch (0.21 M parameters, 5 seeds) | 0.986 [0.978, 0.993] | 0.985 [0.958, 0.996] | 0.978 / 0.914 | 0.026 | Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4) |
+| MobileNetV3-Small, ImageNet, fine-tuned (1.5 M parameters, 5 seeds) | 0.990 [0.984, 0.994] | 0.986 [0.957, 0.996] | 0.993 / 0.848 | 0.043 | Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4) |
 
 What the numbers say, and what they do not:
 
-- Both CNNs clearly beat the pixel baseline (paired AUC difference +0.058 [0.038, 0.081] for the small CNN).
-- Pretraining did **not** give a measurable AUC advantage over a small CNN trained from scratch (+0.004 [-0.001, 0.009]).
-  It does matter for the same MobileNet architecture: random initialisation loses 0.020 AUC [0.012, 0.029] (3 seeds).
+- Both CNNs clearly beat the pixel baseline (paired AUC difference +0.058 [0.038, 0.081] for the small CNN; Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4)).
+- Pretraining did **not** give a measurable AUC advantage over a small CNN trained from scratch (+0.004 [-0.001, 0.009]; Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4)).
+  It does matter for the same MobileNet architecture: random initialisation loses 0.020 AUC [0.012, 0.029] (Verified (run 2026-10-15, seeds 0, 1, 2)).
 - The test set is harder than validation in a specific way. A threshold chosen on validation to reach 90% specificity
   gives only 0.66 (small CNN) and 0.53 (MobileNet) specificity on test. Test has 37.5% normal images against 26% in
   validation and the models over-call pneumonia on the test normals. Temperature scaling fitted on validation cannot fix
-  that shift (see Calibration).
+  that shift (see Calibration). Specificity figures: Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4).
 - A border-mask test shows the models do not collapse without the image border, but they lose 3 to 4 AUC points when a
   10% ring is masked, and the ring alone carries label information (AUC 0.86 for a classifier trained only on it). So
-  border shortcuts are not ruled out (see Shortcut risks).
+  border shortcuts are not ruled out (see Shortcut risks). Border-mask figures: Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4).
 
 [Interactive explorer](docs/index.html): serve the folder with `python -m http.server 8000 --directory docs`
 and open http://localhost:8000. It shows predictions, probabilities, Grad-CAM and a threshold slider with the
@@ -117,6 +117,7 @@ column, are in [`results/summary.md`](results/summary.md) and `results/summary.j
 | Precision / recall / F1 at 0.5 | 0.850 / 0.972 / 0.907 | 0.950 / 0.978 / 0.964 | 0.916 / 0.993 / 0.953 |
 | Mean confusion (TN / FP / FN / TP) at 0.5 | 167.0 / 67.0 / 11.0 / 379.0 | 213.8 / 20.2 / 8.6 / 381.4 | 198.4 / 35.6 / 2.6 / 387.4 |
 | Test sensitivity / specificity at the threshold giving 90% specificity on validation | 0.987 / 0.611 | 0.999 / 0.662 | 1.000 / 0.532 |
+| Status | Verified (run 2026-10-15, 1 run) | Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4) | Verified (run 2026-10-15, seeds 0, 1, 2, 3, 4) |
 
 Seeds change initialisation and batch order only; the data split is fixed. Intervals reflect test-image sampling only (a
 paired bootstrap with the same resample for every model and seed), so they do not include training variance (listed as SD)
@@ -143,7 +144,7 @@ A percentile bootstrap of ECE is biased upward, which is why a point estimate ca
 
 ![Reliability curves](docs/figures/reliability.png)
 
-### Ablations (small CNN and MobileNet, seeds 0 to 2, paired bootstrap)
+### Ablations (small CNN and MobileNet, seeds 0 to 2, paired bootstrap; Verified (run 2026-10-15, seeds 0, 1, 2))
 
 | Change | AUC difference | Specificity at 0.5 difference | Sensitivity at 0.5 difference |
 |---|---|---|---|
